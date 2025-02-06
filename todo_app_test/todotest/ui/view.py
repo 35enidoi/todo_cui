@@ -6,6 +6,7 @@ from todotest.utils.ui import trim_str, error_text, parse_args
 
 
 class View(Cmd):
+    prompt = ">>> "
     intro = "Welcome to todo app!"
 
     def __init__(self, model: TodoModel):
@@ -75,6 +76,12 @@ class View(Cmd):
 
         name = args.name
         description = args.description
+
+        if self.model.exist_task_from_name(name):
+            # もう既に存在している場合
+            print(error_text(f"name `{name}` is already exists"))
+            return
+
         created_todo = self.model.create_task(name, description)
         print("create successful!")
         print(f"todo id: {created_todo['id']}")
@@ -84,3 +91,12 @@ class View(Cmd):
             print("exit: exit this program.")
             return
         return True
+
+    def do_debug_switch(self, _):
+        self.model.db.debug = not self.model.db.debug
+        if self.model.db.debug:
+            print("debug mode enabled")
+            self.prompt = "(debug) " + self.prompt
+        else:
+            print("debug mode disabled")
+            self.prompt = self.prompt[8:]

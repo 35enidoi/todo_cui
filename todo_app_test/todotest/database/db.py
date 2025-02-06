@@ -6,7 +6,11 @@ from todotest.types import Todo
 
 
 class DataBase:
+    __VALID_KEYS = frozenset({"id", "name", "is_completed", "description", "unix_time"})
+    __ORDERS = frozenset({"ASC", "DESC"})
+
     def __init__(self, database: str = ":memory:"):
+        self.debug = False
         self.__con = sqlite3.connect(database)
         self.__con.execute("""
 CREATE TABLE IF NOT EXISTS todos (
@@ -23,6 +27,12 @@ unix_time INTEGER
             cursor = self.__con.execute(sql, value)
             ret = cursor.fetchall()
             cursor.close()
+            if self.debug:
+                print("="*15)
+                print(f"SQL: {sql}")
+                print(f"params: {value}")
+                print(f"return: {ret}")
+                print("="*15)
             return ret
         except Exception as e:
             print("Error has occured while execute SQL.")
@@ -30,17 +40,23 @@ unix_time INTEGER
             print(f"params: {value}")
             raise e
 
-    def _search_todo(self,
-                     key: Optional[tuple[str, str]] = None,  # key, value
-                     order: Optional[tuple[str, str]] = None,
-                     limit: Optional[int] = None):  # key, order
-        VALID_KEYS = {"id", "name", "is_completed", "description", "unix_time"}
-        ORDERS = {"ASC", "DESC"}
+    def exist_todo(self,
+                   key: str,
+                   value: str) -> bool:
+        if key not in self.__VALID_KEYS:
+            raise ValueError
+        else:
+            return bool(self.__execute(f"SELECT EXISTS (SELECT 1 FROM todos WHERE {key} = ?)", (value,))[0][0])
+
+    def search_todo(self,
+                    key: Optional[tuple[str, str]] = None,  # key, value
+                    order: Optional[tuple[str, str]] = None,
+                    limit: Optional[int] = None):  # key, order
         add_phrases = []
         add_params = []
         if key is not None:
             # WHERE文
-            if key[0] not in VALID_KEYS:
+            if key[0] not in self.__VALID_KEYS:
                 raise ValueError
 
             add_phrases.append(f"WHERE {key[0]} = ?")
@@ -48,9 +64,9 @@ unix_time INTEGER
 
         if order is not None:
             # ORDER文
-            if order[0] not in VALID_KEYS:
+            if order[0] not in self.__VALID_KEYS:
                 raise ValueError
-            elif order[1] not in ORDERS:
+            elif order[1] not in self.__ORDERS:
                 raise ValueError
 
             add_phrases.append(f"ORDER BY {order[0]} {order[1]}")
@@ -63,18 +79,9 @@ unix_time INTEGER
         sql = "SELECT * FROM todos " + " ".join(add_phrases)
         return [self.todo_translate(*i) for i in self.__execute(sql, tuple(add_params))]
 
-    def search_todo_from_id(self, id: int) -> Todo:
-        return self._search_todo(key=("id", id))[0]
-
-    def search_todo_from_name(self, name: str) -> Todo:
-        return self._search_todo(key=("name", name))[0]
-
-    def search_todo_from_completed(self, is_completed: str) -> list[Todo]:
-        return self._search_todo(key=("is_completed", is_completed))
-
     def create_todo(self, name: str, description: Union[str, None]):
         self.__execute("INSERT INTO todos VALUES (?, ?, ?, 0, ?)", (None, name, description, int(datetime.now().timestamp())))
-        return self.search_todo_from_name(name)
+        return self.search_todo(key=("name", name))[0]
 
     def update_todo(self, id: int, name: Optional[str] = None, description: Optional[str] = None) -> None:
         add_str = ""
