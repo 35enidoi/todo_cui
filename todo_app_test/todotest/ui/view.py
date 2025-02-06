@@ -3,6 +3,7 @@ from datetime import datetime
 
 from todotest.model import TodoModel
 from todotest.utils.ui import trim_str, error_text, parse_args
+from todotest.enum.db import VALID_KEYS, VALID_ORDERS
 
 
 class View(Cmd):
@@ -19,12 +20,30 @@ class View(Cmd):
 # Todo関係コマンド
 
     def do_show(self, args):
-        arg_names = ()
+        arg_names = (
+            (("-k", "--key"), {"nargs": 2, "metavar": (list(VALID_KEYS), "KEY"), "help": "filter by keys."}),
+            (("-o", "--order"), {"nargs": 2, "choices": list(VALID_KEYS) + list(VALID_ORDERS),
+                                 "metavar": (list(VALID_KEYS), list(VALID_ORDERS)), "help": "sorting argorithm"}),
+            (("-l", "--limit"), {"type": int, "help": "showing number"}),
+        )
         args = parse_args(args, prog="show", args=arg_names, description="show Todos")
         if args is None:
             return
 
-        tasks = self.model.show_tasks()
+        if args.key is not None:
+            if args.key[0] not in VALID_KEYS:
+                print(error_text(f"key `{args.key[0]}` is not available"))
+                return
+
+        if args.order is not None:
+            if args.order[0] not in VALID_KEYS:
+                print(error_text(f"key `{args.order[0]}` is not available"))
+                return
+            elif args.order[1] not in VALID_ORDERS:
+                print(error_text(f"order `{args.order[1]}` is not abailable"))
+                return
+
+        tasks = self.model.show_tasks(keys=args.key, order=args.order, limit=args.limit)
 
         if len(tasks) == 0:
             print("no tasks available")
@@ -38,8 +57,8 @@ class View(Cmd):
                 str(i["id"]).center(4),
                 trim_str(i["name"], 10),
                 trim_str(str(i["description"]), 19),
-                trim_str(str(i["is_completed"]), 9),
-                datetime.fromtimestamp(i["unix_time"]).strftime("%Y/%m/%d").center(12)
+                trim_str(str(i["completed"]), 9),
+                datetime.fromtimestamp(i["date"]).strftime("%Y/%m/%d").center(12)
             )
 
             print(text)

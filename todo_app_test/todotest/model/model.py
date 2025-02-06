@@ -1,3 +1,5 @@
+from typing import Optional
+
 from todotest.database import DataBase
 from todotest.types import Todo
 
@@ -6,8 +8,11 @@ class TodoModel:
     def __init__(self, db: DataBase):
         self.db = db
 
-    def show_tasks(self) -> list[Todo]:
-        return self.db.search_todo()
+    def show_tasks(self,
+                   keys: Optional[tuple[str, str]] = None,
+                   order: Optional[tuple[str]] = None,
+                   limit: Optional[int] = None) -> list[Todo]:
+        return self.db.search_todo(key=keys, order=order, limit=limit)
 
     def create_task(self, name: str, description: str) -> Todo:
         if description == "":

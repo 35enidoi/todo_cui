@@ -3,12 +3,10 @@ from typing import Any, Union, Optional
 from datetime import datetime
 
 from todotest.types import Todo
+from todotest.enum.db import VALID_KEYS, VALID_ORDERS
 
 
 class DataBase:
-    __VALID_KEYS = frozenset({"id", "name", "is_completed", "description", "unix_time"})
-    __ORDERS = frozenset({"ASC", "DESC"})
-
     def __init__(self, database: str = ":memory:"):
         self.debug = False
         self.__con = sqlite3.connect(database)
@@ -17,8 +15,8 @@ CREATE TABLE IF NOT EXISTS todos (
 id INTEGER PRIMARY KEY AUTOINCREMENT,
 name TEXT NOT NULL UNIQUE,
 description TEXT,
-is_completed INTEGER NOT NULL,
-unix_time INTEGER
+completed INTEGER NOT NULL,
+date INTEGER
 )
 """)
 
@@ -43,7 +41,7 @@ unix_time INTEGER
     def exist_todo(self,
                    key: str,
                    value: str) -> bool:
-        if key not in self.__VALID_KEYS:
+        if key not in VALID_KEYS:
             raise ValueError
         else:
             return bool(self.__execute(f"SELECT EXISTS (SELECT 1 FROM todos WHERE {key} = ?)", (value,))[0][0])
@@ -56,7 +54,7 @@ unix_time INTEGER
         add_params = []
         if key is not None:
             # WHERE文
-            if key[0] not in self.__VALID_KEYS:
+            if key[0] not in VALID_KEYS:
                 raise ValueError
 
             add_phrases.append(f"WHERE {key[0]} = ?")
@@ -64,9 +62,9 @@ unix_time INTEGER
 
         if order is not None:
             # ORDER文
-            if order[0] not in self.__VALID_KEYS:
+            if order[0] not in VALID_KEYS:
                 raise ValueError
-            elif order[1] not in self.__ORDERS:
+            elif order[1] not in VALID_ORDERS:
                 raise ValueError
 
             add_phrases.append(f"ORDER BY {order[0]} {order[1]}")
@@ -102,8 +100,8 @@ unix_time INTEGER
             self.__execute(sql, value)
 
     def complete_todo(self, id: int) -> None:
-        self.__execute("UPDATE todos SET is_completed = 1 WHERE id = ?", (id,))
+        self.__execute("UPDATE todos SET completed = 1 WHERE id = ?", (id,))
 
     @staticmethod
-    def todo_translate(id: int, name: str, description: Union[str, None], is_completed: bool, unix_time: int) -> Todo:
-        return Todo(id=id, name=name, description=description, is_completed=bool(is_completed), unix_time=unix_time)
+    def todo_translate(id: int, name: str, description: Union[str, None], completed: bool, date: int) -> Todo:
+        return Todo(id=id, name=name, description=description, completed=bool(completed), date=date)
