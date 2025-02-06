@@ -16,28 +16,7 @@ class View(Cmd):
     def emptyline(self):
         return
 
-    def do_help(self, arg):
-        commands = [i[3:] for i in self.get_names() if i[:3] == "do_"]
-
-        # help単体の時の挙動
-        if arg == "":
-            print("avaible commands")
-            print("="*15)
-            print(" ".join(commands))
-            return
-
-        arg_names = (
-            (("command",), {"help": "command name"}),
-        )
-        args = parse_args(arg, prog="help", args=arg_names, description="show command help message")
-        if args is None:
-            return
-
-        if args.command in commands:
-            func = getattr(self, "do_" + args.command)
-            func("--help")
-        else:
-            print(error_text(f"command `{args.command}` is not available."))
+# Todo関係コマンド
 
     def do_show(self, args):
         arg_names = ()
@@ -86,13 +65,44 @@ class View(Cmd):
         print("create successful!")
         print(f"todo id: {created_todo['id']}")
 
+# 特殊コマンド
+
+    def do_help(self, arg):
+        commands = [i[3:] for i in self.get_names() if i[:3] == "do_"]
+
+        # help単体の時の挙動
+        if arg == "":
+            print("avaible commands")
+            print("="*15)
+            print(" ".join(commands))
+            return
+
+        arg_names = (
+            (("command",), {"help": "command name"}),
+        )
+        args = parse_args(arg, prog="help", args=arg_names, description="show command help message")
+        if args is None:
+            return
+
+        if args.command in commands:
+            func = getattr(self, "do_" + args.command)
+            func("--help")
+        else:
+            print(error_text(f"command `{args.command}` is not available."))
+
     def do_exit(self, arg):
         if arg == "--help":
             print("exit: exit this program.")
             return
         return True
 
-    def do_debug_switch(self, _):
+# デバッグ用コマンド
+
+    def do_debug_switch(self, arg):
+        if arg == "--help":
+            print("switch mode into `debug mode`")
+            return
+
         self.model.db.debug = not self.model.db.debug
         if self.model.db.debug:
             print("debug mode enabled")
