@@ -5,5 +5,5 @@ class Todo(TypedDict):
     id: int
     name: str
     description: Union[str, None]
-    is_completed: bool
-    unix_time: int
+    completed: bool
+    date: int
