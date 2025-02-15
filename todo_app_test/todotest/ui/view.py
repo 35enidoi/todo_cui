@@ -10,6 +10,8 @@ class View(Cmd):
     prompt = ">>> "
     intro = "Welcome to todo app!"
 
+# Cmdの設定関連
+
     def __init__(self, model: TodoModel):
         super().__init__()
         self.model = model
