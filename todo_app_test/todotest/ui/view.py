@@ -84,6 +84,21 @@ class View(Cmd):
         print("create successful!")
         print(f"todo id: {created_todo['id']}")
 
+    def do_complete(self, arg: str):
+        arg_names = (
+            (("id",), {"help": "todo id"}),
+        )
+        args = parse_args(arg, prog="complete", args=arg_names, description="mark as complete on todo id")
+        if args is None:
+            return
+
+        if not self.model.exist_task_from_id(args.id):
+            print(error_text(f"todo id `{args.id}` is not exists"))
+        elif self.model.show_tasks(keys=("id", args.id))[0]["completed"]:
+            print(error_text("this todo is already completed"))
+        else:
+            self.model.update(args.id)
+
 # 特殊コマンド
 
     def do_help(self, arg):

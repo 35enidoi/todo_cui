@@ -6,3 +6,5 @@
   Todoの作成
  - show  
   一覧の表示
+ - complete  
+  Todoを達成したことにする
