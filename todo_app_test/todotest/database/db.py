@@ -31,6 +31,7 @@ date INTEGER
                 print(f"params: {value}")
                 print(f"return: {ret}")
                 print("="*15)
+            self.__con.commit()
             return ret
         except Exception as e:
             print("Error has occured while execute SQL.")
