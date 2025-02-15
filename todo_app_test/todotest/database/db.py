@@ -2,7 +2,7 @@ import sqlite3
 from typing import Any, Union, Optional
 from datetime import datetime
 
-from todotest.types import Todo
+from todotest.enum.types import Todo
 from todotest.enum.db import VALID_KEYS, VALID_ORDERS
 
 

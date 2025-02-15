@@ -1,7 +1,7 @@
 from typing import Optional
 
 from todotest.database import DataBase
-from todotest.types import Todo
+from todotest.enum.types import Todo
 
 
 class TodoModel:
