@@ -1,34 +1,9 @@
-import os
-import unittest
-import tempfile
-
-from todotest.database import DataBase
 from todotest.enum.db import VALID_KEYS
 
-from util import SQLChecker
+from util import SQLChecker, TestCasewithTmpDB
 
 
-class DetabaseTestCase(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        # tmpファイルの作成
-        cls.tmp_file = tempfile.TemporaryFile(delete=False)
-        cls.tmp_file.close()
-
-    @classmethod
-    def tearDownClass(cls):
-        # tmpファイル削除
-        os.remove(cls.tmp_file.name)
-        del cls.tmp_file
-
-    def setUp(self):
-        self.db = DataBase(self.tmp_file.name)
-
-    def tearDown(self):
-        del self.db
-        # ファイルの初期化
-        open(self.tmp_file.name, mode="wb").close()
-
+class DetabaseTestCase(TestCasewithTmpDB):
     def test_search(self):
         # テスト値を追加
         with SQLChecker(self.tmp_file.name) as sql:
