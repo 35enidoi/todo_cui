@@ -6,9 +6,7 @@ from util import SQLChecker, TestCasewithTmpDB
 class DetabaseTestCase(TestCasewithTmpDB):
     def test_search(self):
         # テスト値を追加
-        with SQLChecker(self.tmp_file.name) as sql:
-            sql.execute("INSERT INTO todos VALUES (?, ?, ?, 0, ?)", None, "hoge", "huga", 100)  # 1
-            real_todo = self.db.todo_translate(*sql.execute("SELECT * FROM todos WHERE id = 1")[0])
+        real_todo = self.sql_create_todo(self.tmp_file.name)
 
         # KEY
         for i in VALID_KEYS:
@@ -16,10 +14,9 @@ class DetabaseTestCase(TestCasewithTmpDB):
             self.assertEqual(todo, real_todo)
 
         # テスト値を追加
-        with SQLChecker(self.tmp_file.name) as sql:
-            sql.execute("INSERT INTO todos VALUES (?, ?, ?, 0, ?)", None, "a", "a", 0)  # 2
-            sql.execute("INSERT INTO todos VALUES (?, ?, ?, 1, ?)", None, "zzzz", "zzzz", 10)  # 3
-            real_todos = [self.db.todo_translate(*i) for i in sql.execute("SELECT * FROM todos ORDER BY id ASC")]
+        real_todos = [real_todo]
+        for _ in range(3):
+            real_todos.append(self.sql_create_todo(self.tmp_file.name))
 
         # ORDER
         self.assertEqual(self.db.search_todo(order=("id", "ASC")), real_todos)
@@ -31,13 +28,15 @@ class DetabaseTestCase(TestCasewithTmpDB):
     def test_create(self):
         todo = self.db.create_todo("hoge", "huga")
 
-        for i in VALID_KEYS:
-            self.assertEqual(self.db.search_todo(key=(i, todo[i]))[0], todo)
+        with SQLChecker(self.tmp_file.name) as sql:
+            for i in VALID_KEYS:
+                real_todo = self.todo_translate(*sql.execute(f"SELECT * FROM todos WHERE {i} = ?", todo[i])[0])
+                self.assertEqual(todo, real_todo)
 
     def test_exist(self):
         self.assertFalse(self.db.exist_todo("id", 1))
 
-        todo = self.db.create_todo("hoge", "huga")
+        todo = self.sql_create_todo(self.tmp_file.name)
 
         for i in VALID_KEYS:
             self.assertTrue(self.db.exist_todo(i, todo[i]))
@@ -46,8 +45,12 @@ class DetabaseTestCase(TestCasewithTmpDB):
         ...  # Todo あとでつくる
 
     def test_complete(self):
-        todo_id = self.db.create_todo("hoge", "huga")["id"]
+        todo = self.sql_create_todo(self.tmp_file.name)
 
-        self.assertFalse(self.db.search_todo(("id", todo_id))[0]["completed"])
-        self.db.complete_todo(todo_id)
-        self.assertTrue(self.db.search_todo(("id", todo_id))[0]["completed"])
+        self.assertFalse(todo["completed"])
+
+        self.db.complete_todo(todo["id"])
+
+        with SQLChecker(self.tmp_file.name) as sql:
+            completed_todo = self.db.todo_translate(*sql.execute("SELECT * FROM todos WHERE id = ?", todo["id"])[0])
+            self.assertTrue(completed_todo["completed"])
