@@ -22,14 +22,31 @@ class ViewTestCase(TestCasewithTmpDB):
 
     @patch("builtins.print")
     def test_show(self, mock_print: MagicMock):
-        # Todo 引数(key, order, limit)も確かめる
-        PRINT_KEYS = ["id", "name", "description", "completed", "date"]
-
         def todo_to_print_list(todo: Todo):
             return [
              str(todo["id"]), trim_str(todo["name"], 10).strip(), trim_str(todo["description"], 19).strip(),
              str(bool(todo["completed"])), datetime.fromtimestamp(todo["date"]).strftime("%Y/%m/%d")
             ]
+
+        def print_check_beforethird(mock: MagicMock) -> list[list[str]]:
+            """printの一行目と二行目を確かめて三行目以降を返す"""
+            def strip_values(printed: str) -> list[str]:
+                ret = []
+                for i in printed.split("|"):
+                    if i == "":
+                        continue
+                    else:
+                        ret.append(i.strip())
+                return ret
+
+            # 一行目
+            first_seqtion = strip_values(mock.call_args_list[0].args[0])
+            self.assertListEqual(["id", "name", "description", "completed", "date"], first_seqtion)
+            # 二行目
+            second_seqtion = mock.call_args_list[1].args[0]
+            self.assertEqual("-"*70, second_seqtion)
+            # 三行目以降(返り値)
+            return [strip_values(i.args[0]) for i in mock.call_args_list[2:]]
 
         # 標準状態(タスク無し)での実行
         self.view.do_show("")
@@ -46,16 +63,68 @@ class ViewTestCase(TestCasewithTmpDB):
         # 実行
         self.view.do_show("")
 
-        # 一行目
-        first_seqtion = [i.strip() for i in str(mock_print.call_args_list[0].args[0]).split("|") if i != ""]
-        self.assertListEqual(PRINT_KEYS, first_seqtion)
+        # 取り出し&確認
+        seqtions = print_check_beforethird(mock_print)
 
-        # 二行目(divider)
-        self.assertEqual("-"*70, mock_print.call_args_list[1].args[0])
+        self.assertEqual(1, len(seqtions))
 
-        # 三行目
-        third_seqtion = [i.strip() for i in str(mock_print.call_args_list[2].args[0]).split("|") if i != ""]
+        third_seqtion = seqtions[0]
         self.assertListEqual(todo_to_print_list(todo), third_seqtion)
+
+        # 初期化
+        mock_print.reset_mock()
+
+        # タスクをさらに追加
+        todos = [todo]
+        for _ in range(3):
+            todos.append(self.sql_create_todo(self.tmp_file.name))
+
+        # 実行
+        self.view.do_show("")
+
+        # 確認
+        seqtions = print_check_beforethird(mock_print)
+
+        self.assertEqual(4, len(seqtions))
+
+        for pos, value in enumerate(seqtions):
+            self.assertListEqual(todo_to_print_list(todos[pos]), value)
+
+        # 初期化
+        mock_print.reset_mock()
+
+        # キー指定実行
+        self.view.do_show(f"-k id {todos[0]['id']}")
+
+        # 確認
+        seqtions = print_check_beforethird(mock_print)
+        self.assertEqual(1, len(seqtions))
+        self.assertListEqual(todo_to_print_list(todos[0]), seqtions[0])
+
+        # 初期化
+        mock_print.reset_mock()
+
+        # 順序実行
+        self.view.do_show("-o id DESC")
+
+        # 確認
+        seqtions = print_check_beforethird(mock_print)
+
+        for pos, value in enumerate(seqtions):
+            self.assertListEqual(todo_to_print_list(todos[-1*(pos+1)]), value)
+
+        # 初期化
+        mock_print.reset_mock()
+
+        # limit実行
+        self.view.do_show("-l 2")
+
+        # 確認
+        seqtions = print_check_beforethird(mock_print)
+
+        self.assertEqual(2, len(seqtions))
+        for pos, value in enumerate(seqtions):
+            self.assertEqual(todo_to_print_list(todos[pos]), value)
 
     @patch("builtins.print")
     def test_create(self, mock_print: MagicMock):
