@@ -66,5 +66,5 @@ class DetabaseTestCase(TestCasewithTmpDB):
 
         # 完了したことを確認
         with SQLChecker(self.tmp_file.name) as sql:
-            completed_todo = self.db.todo_translate(*sql.execute("SELECT * FROM todos WHERE id = ?", todo["id"])[0])
+            completed_todo = self.todo_translate(*sql.execute("SELECT * FROM todos WHERE id = ?", todo["id"])[0])
             self.assertTrue(completed_todo["completed"])
