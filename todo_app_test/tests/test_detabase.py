@@ -52,7 +52,38 @@ class DetabaseTestCase(TestCasewithTmpDB):
             self.assertFalse(self.db.exist_todo(i, todo[i]))
 
     def test_update(self):
-        ...  # Todo あとでつくる
+        # 作成
+        todo = self.sql_create_todo(self.tmp_file.name)
+
+        # 変更する名前
+        change_name = self.random_name
+
+        # 違うことを確認
+        self.assertNotEqual(change_name, todo["name"])
+
+        # 実行
+        self.db.update_todo(todo["id"], name=change_name)
+
+        # 変わったことを確認
+        with SQLChecker(self.tmp_file.name) as sql:
+            changed_name = sql.execute("SELECT name FROM todos WHERE id = ?", todo["id"])[0][0]
+
+        self.assertEqual(changed_name, change_name)
+
+        # 変更する詳細
+        change_description = self.random_description
+
+        # 違うことを確認
+        self.assertNotEqual(change_description, todo["description"])
+
+        # 実行
+        self.db.update_todo(todo["id"], description=change_description)
+
+        # 変わったことを確認
+        with SQLChecker(self.tmp_file.name) as sql:
+            changed_description = sql.execute("SELECT description FROM todos WHERE id = ?", todo["id"])[0][0]
+
+        self.assertEqual(changed_description, change_description)
 
     def test_complete(self):
         # 作成
