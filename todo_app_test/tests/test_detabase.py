@@ -85,6 +85,21 @@ class DetabaseTestCase(TestCasewithTmpDB):
 
         self.assertEqual(changed_description, change_description)
 
+        # まだ完了していないことを確認
+        with SQLChecker(self.tmp_file.name) as sql:
+            is_completed = sql.execute("SELECT completed FROM todos WHERE id = ?", todo["id"])[0][0]
+
+        self.assertFalse(bool(is_completed))
+
+        # 実行
+        self.db.update_todo(todo["id"], completed=1)
+
+        # 完了を確認
+        with SQLChecker(self.tmp_file.name) as sql:
+            is_completed = sql.execute("SELECT completed FROM todos WHERE id = ?", todo["id"])[0][0]
+
+        self.assertTrue(bool(is_completed))
+
     def test_complete(self):
         # 作成
         todo = self.sql_create_todo(self.tmp_file.name)

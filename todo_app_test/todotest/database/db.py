@@ -82,26 +82,20 @@ date INTEGER
         self.__execute("INSERT INTO todos VALUES (?, ?, ?, 0, ?)", (None, name, description, int(datetime.now().timestamp())))
         return self.search_todo(key=("name", name))[0]
 
-    def update_todo(self, id: int, name: Optional[str] = None, description: Optional[str] = None) -> None:
-        add_str = ""
-        add_list = []
-
-        if name is not None:
-            add_str += " name = ?"
-            add_list.append(name)
-        elif description is not None:
-            add_str += " description = ?"
-            add_list.append(description)
-
-        if len(add_list) == 0:
-            return
+    def update_todo(self, id: str, **changes: Any):
+        if not self.exist_todo("id", id):
+            raise ValueError
+        elif any((key not in VALID_KEYS for key in changes.keys())):
+            raise ValueError
         else:
-            sql = "UPDATE todos SET" + add_str + " WHERE id = ?"
-            value = tuple(add_list) + (id, )
-            self.__execute(sql, value)
+            add_sql = " ".join((f"{i} = ?" for i in changes.keys()))
+            values = tuple(changes.values())
+
+            sql = "UPDATE todos SET " + add_sql + " WHERE id = ?"
+            self.__execute(sql, values + (id, ))
 
     def complete_todo(self, id: int) -> None:
-        self.__execute("UPDATE todos SET completed = 1 WHERE id = ?", (id,))
+        self.update_todo(id=id, completed=True)
 
     @staticmethod
     def todo_translate(id: int, name: str, description: Union[str, None], completed: bool, date: int) -> Todo:
