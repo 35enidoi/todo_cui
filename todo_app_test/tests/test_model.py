@@ -50,7 +50,7 @@ class ModelTestCase(TestCasewithTmpDB):
                 real_todo = self.todo_translate(*sql.execute(f"SELECT * FROM todos WHERE {i} = ?", todo[i])[0])
                 self.assertDictEqual(real_todo, todo)
 
-    def test_complete(self):  # model側の関数名間違えてるので後で修正する予定
+    def test_complete(self):
         # 作成
         todo = self.sql_create_todo(self.tmp_file.name)
 
@@ -58,7 +58,7 @@ class ModelTestCase(TestCasewithTmpDB):
         self.assertFalse(todo["completed"])
 
         # 実行
-        self.model.update(todo["id"])
+        self.model.complete(todo["id"])
 
         # 確認
         with SQLChecker(self.tmp_file.name) as sql:

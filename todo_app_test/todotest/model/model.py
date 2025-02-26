@@ -25,5 +25,5 @@ class TodoModel:
     def exist_task_from_id(self, id: str) -> bool:
         return self.db.exist_todo("id", id)
 
-    def update(self, id: str) -> bool:
+    def complete(self, id: str) -> bool:
         return self.db.complete_todo(id=id)

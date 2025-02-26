@@ -99,7 +99,7 @@ class View(Cmd):
         elif self.model.show_tasks(keys=("id", args.id))[0]["completed"]:
             print(error_text("this todo is already completed"))
         else:
-            self.model.update(args.id)
+            self.model.complete(args.id)
 
 # 特殊コマンド
 
