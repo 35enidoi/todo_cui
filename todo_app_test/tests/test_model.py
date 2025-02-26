@@ -42,7 +42,7 @@ class ModelTestCase(TestCasewithTmpDB):
 
     def test_create(self):
         # 実行
-        todo = self.model.create_task("hoge", "huga")
+        todo = self.model.create_task(self.random_name, self.random_description)
 
         # 確認
         with SQLChecker(self.tmp_file.name) as sql:

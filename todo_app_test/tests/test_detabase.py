@@ -27,7 +27,7 @@ class DetabaseTestCase(TestCasewithTmpDB):
 
     def test_create(self):
         # 作成
-        todo = self.db.create_todo("hoge", "huga")
+        todo = self.db.create_todo(self.random_name, self.random_description)
 
         # 確認
         with SQLChecker(self.tmp_file.name) as sql:

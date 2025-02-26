@@ -133,8 +133,10 @@ class ViewTestCase(TestCasewithTmpDB):
             todos = [self.todo_translate(*i) for i in sql.execute("SELECT * FROM todos")]
         self.assertListEqual([], todos)
 
+        # テスト用文字列を作成
+        todo_name, todo_description = self.random_name, self.random_description
         # 実行
-        self.view.do_create("hogehoge -d hugahuga")
+        self.view.do_create(f"{todo_name} -d {todo_description}")
 
         # 確認
         with SQLChecker(self.tmp_file.name) as sql:
@@ -145,8 +147,8 @@ class ViewTestCase(TestCasewithTmpDB):
         todo = todos[0]
 
         self.assertEqual(1, todo["id"])  # idが1か
-        self.assertEqual("hogehoge", todo["name"])  # nameがhogehogeか
-        self.assertEqual("hugahuga", todo["description"])  # descriptionがhugahugaか
+        self.assertEqual(todo_name, todo["name"])  # nameが合っているか
+        self.assertEqual(todo_description, todo["description"])  # descriptionが合っているか
 
         # printした物が2個あるか
         self.assertEqual(2, len(mock_print.call_args_list))
