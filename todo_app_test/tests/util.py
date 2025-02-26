@@ -31,6 +31,18 @@ class SQLChecker:
 
 
 class TestCasewithTmpDB(TestCase):
+    @property
+    def random_name(self) -> str:
+        return "".join(choices(ascii_letters, k=20))
+
+    @property
+    def random_description(self) -> str:
+        return "".join(choices(ascii_letters, k=100))
+
+    @property
+    def random_time(self) -> str:
+        return "".join(choices(digits, k=8))
+
     @classmethod
     def setUpClass(cls):
         # tmpファイルの作成
